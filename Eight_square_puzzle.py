@@ -179,21 +179,26 @@ class EightSquare:
     def solve_eight(self, heuristic: Callable['EightSquare', 'EightSquare']) -> int:
         """Counts the number of steps it takes to solve the current square puzzle"""
         steps: int = 0
+        priority: int = 0 #needed to break ties in the heap
         heap: list[tuple[int, 'EightSquare']] = []
         visited = set()
-        heapq.heappush(heap, (heuristic(self, self), self)) 
+        heapq.heappush(heap, (heuristic(self, self), priority, self))
+        priority += 1
+        print(heap[0][1])
 
-        while not heap:
-            front: tuple[int, 'EightSquare'] = heapq.heappop(heap)
+        while len(heap) != 0:
+            print("is this loop running\n")
+            front: tuple[int, int, 'EightSquare'] = heapq.heappop(heap)
             visited.add(front)
             steps += 1
 
-            if self.check_if_goal(front[1]):
+            if self.check_if_goal(front[2]):
                 return steps
 
             for neighbor in self.get_neighbors(front[1]):
                 if neighbor not in visited and neighbor not in heap:
-                    heapq.heappush(heap, (heuristic(self, neighbor), neighbor))
+                    heapq.heappush(heap, (heuristic(self, neighbor), priority, neighbor))
+                    priority += 1
 
         return steps
 
@@ -205,8 +210,8 @@ class EightSquare:
 def main():
     #single test
     single: EightSquare = EightSquare()
-    single.set_state(1,0,2,3,4,5,6,7,8,[0,0])
+    single.set_state(1,0,2,3,4,5,6,7,8,[0,1])
     print(single)
-    single.solve_eight(EightSquare.calculate_heuristic_one)
+    print(single.solve_eight(EightSquare.calculate_heuristic_one))
 
 main()
