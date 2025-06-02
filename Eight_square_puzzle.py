@@ -1,6 +1,7 @@
 import random
 import heapq
 import copy
+import math
 from typing import Callable
 
 """The classic 8 tiles puzzle where we have to figure out how many tiles are in the correct spot"""
@@ -38,13 +39,15 @@ class EightSquare:
             for columns in range(3):
                 #print(3*rows + columns)
                 self.puzzle[rows][columns] = (3*rows + columns)
-                print(self.puzzle[rows][columns])
+                #print(self.puzzle[rows][columns])
         self.zero = [0,0]
 
     def randomize(self):
         """Create a random permutation of the puzzle by checking the order of each orbit
            odd orbits take an even number of swaps and even orbits take an odd number of swaps
            odd + odd = even, even + even is even, odd + even  = odd"""
+        
+        """
         visited: list = [0,0,0,0,0,0,0,0,0]
         permutation: list = [0,1,2,3,4,5,6,7,8]
         random.shuffle(permutation)
@@ -52,7 +55,7 @@ class EightSquare:
         for i in range(9):
             initial: int = permutation[i] 
             current: int = permutation[i]
-            if (visited[current] != 1): #Check if this was part of a pervious cycle
+            if (visited[current] != 1): #Check if this was part of a previous cycle
                 visited[current] = 1
                 while permutation[current] != initial:
                     current = permutation[current]
@@ -61,6 +64,21 @@ class EightSquare:
 
         if (permutation.index(0)%2 == 0 and count%2 != 0) or (permutation.index(0)%2 == 1 and count%2 != 1):
             permutation[7], permutation[8] = permutation[8], permutation[7]
+        """
+
+        permutation: list = [0,1,2,3,4,5,6,7,8]
+        random.shuffle(permutation)
+        count: int = 0
+        for i in range(len(permutation)):
+            for j in range (i+1, len(permutation)):
+                if permutation[i] != 0 and permutation[j] != 0 and permutation[i] > permutation[j]:
+                    count += 1
+
+        if count%2 == 1:
+            if permutation[5] == 0 or permutation[4] == 0:
+                permutation[7], permutation[8] = permutation[8], permutation[7]
+            else:
+                permutation[5], permutation[4] = permutation[4], permutation[5]
 
         for rows in range(3):
             for columns in range(3):
@@ -102,26 +120,52 @@ class EightSquare:
         sum_of_distance: int = 0
         for rows in range(3):
             for columns in range(3):
-                if array[rows][columns] == 0:
+                if array.puzzle[rows][columns] == 0:
                     sum_of_distance = sum_of_distance + abs(rows - 0) + abs(columns - 0)
-                elif array[rows][columns] == 1:
+                elif array.puzzle[rows][columns] == 1:
                     sum_of_distance = sum_of_distance + abs(rows - 0) + abs(columns - 1)
-                elif array[rows][columns] == 2:
+                elif array.puzzle[rows][columns] == 2:
                     sum_of_distance = sum_of_distance + abs(rows - 0) + abs(columns - 2)
-                elif array[rows][columns] == 3:
+                elif array.puzzle[rows][columns] == 3:
                     sum_of_distance = sum_of_distance + abs(rows - 1) + abs(columns - 0)
-                elif array[rows][columns] == 4:
+                elif array.puzzle[rows][columns] == 4:
                     sum_of_distance = sum_of_distance + abs(rows - 1) + abs(columns - 1)
-                elif array[rows][columns] == 5:
+                elif array.puzzle[rows][columns] == 5:
                     sum_of_distance = sum_of_distance + abs(rows - 1) + abs(columns - 2)
-                elif array[rows][columns] == 6:
+                elif array.puzzle[rows][columns] == 6:
                     sum_of_distance = sum_of_distance + abs(rows - 2) + abs(columns - 0)
-                elif array[rows][columns] == 7:
+                elif array.puzzle[rows][columns] == 7:
                     sum_of_distance = sum_of_distance + abs(rows - 2) + abs(columns - 1)
-                elif array[rows][columns] == 8:
+                elif array.puzzle[rows][columns] == 8:
                     sum_of_distance = sum_of_distance + abs(rows - 2) + abs(columns - 2)
 
         return sum_of_distance
+    
+    def calculate_heuristic_three(self, array: 'EightSquare') -> int:
+        euclidian_distance: int = 0
+        for rows in range(3):
+            for columns in range(3):
+                if array.puzzle[rows][columns] == 0:
+                    euclidian_distance = euclidian_distance + math.sqrt(abs(rows - 0)**2 + abs(columns - 0)**2) 
+                elif array.puzzle[rows][columns] == 1:
+                    euclidian_distance = euclidian_distance + math.sqrt(abs(rows - 0)**2 + abs(columns - 1)**2)
+                elif array.puzzle[rows][columns] == 2:
+                    euclidian_distance = euclidian_distance + math.sqrt(abs(rows - 0)**2 + abs(columns - 2)**2)
+                elif array.puzzle[rows][columns] == 3:
+                    euclidian_distance = euclidian_distance + math.sqrt(abs(rows - 1)**2 + abs(columns - 0)**2)
+                elif array.puzzle[rows][columns] == 4:
+                    euclidian_distance = euclidian_distance + math.sqrt(abs(rows - 1)**2 + abs(columns - 1)**2)
+                elif array.puzzle[rows][columns] == 5:
+                    euclidian_distance = euclidian_distance + math.sqrt(abs(rows - 1)**2 + abs(columns - 2)**2)
+                elif array.puzzle[rows][columns] == 6:
+                    euclidian_distance = euclidian_distance + math.sqrt(abs(rows - 2)**2 + abs(columns - 0)**2)
+                elif array.puzzle[rows][columns] == 7:
+                    euclidian_distance = euclidian_distance + math.sqrt(abs(rows - 2)**2 + abs(columns - 1)**2)
+                elif array.puzzle[rows][columns] == 8:
+                    euclidian_distance = euclidian_distance + math.sqrt(abs(rows - 2)**2 + abs(columns - 2)**2)
+
+        return euclidian_distance
+
 
     def check_if_goal(self, array: 'EightSquare') -> bool:
         """Checks the puzzle to see if we have completed it"""
@@ -176,7 +220,7 @@ class EightSquare:
 
         return neighbors
     
-    def solve_eight(self, heuristic: Callable['EightSquare', 'EightSquare']) -> int:
+    def solve_eight(self, heuristic: Callable[['EightSquare'], list]) -> int:
         """Counts the number of steps it takes to solve the current square puzzle"""
         steps: int = 0
         priority: int = 0 #needed to break ties in the heap
@@ -184,19 +228,22 @@ class EightSquare:
         visited = set()
         heapq.heappush(heap, (heuristic(self, self), priority, self))
         priority += 1
-        print(heap[0][1])
+        #print(heap[0][1])
 
         while len(heap) != 0:
-            print("is this loop running\n")
             front: tuple[int, int, 'EightSquare'] = heapq.heappop(heap)
-            visited.add(front)
-            steps += 1
+            #print(front[2])
+            hashable_array = tuple(tuple(row) for row in front[2].puzzle)
+            visited.add(hashable_array)
 
             if self.check_if_goal(front[2]):
                 return steps
 
-            for neighbor in self.get_neighbors(front[1]):
-                if neighbor not in visited and neighbor not in heap:
+            steps += 1
+
+            for neighbor in self.get_neighbors(front[2]):
+                hashable_array = tuple(tuple(row) for row in neighbor.puzzle)
+                if hashable_array not in visited:
                     heapq.heappush(heap, (heuristic(self, neighbor), priority, neighbor))
                     priority += 1
 
@@ -205,13 +252,56 @@ class EightSquare:
     def __str__ (self) -> str:
         return f'{self.puzzle[0][0]}|{self.puzzle[0][1]}|{self.puzzle[0][2]}\n{self.puzzle[1][0]}|{self.puzzle[1][1]}|{self.puzzle[1][2]}\n{self.puzzle[2][0]}|{self.puzzle[2][1]}|{self.puzzle[2][2]}\n{self.zero}\n'
 
+    def __hash__ (self):
+        return hash(f'{self.puzzle[0][0]}|{self.puzzle[0][1]}|{self.puzzle[0][2]}\n{self.puzzle[1][0]}|{self.puzzle[1][1]}|{self.puzzle[1][2]}\n{self.puzzle[2][0]}|{self.puzzle[2][1]}|{self.puzzle[2][2]}\n{self.zero}\n')
 
 
 def main():
-    #single test
+    #Single test passed
+    #single test heuristic_one
+    """
+    print("Single test")
     single: EightSquare = EightSquare()
-    single.set_state(1,0,2,3,4,5,6,7,8,[0,1])
-    print(single)
+    single.set_state(0,4,1,7,5,6,8,3,2,[0,0])
+    #print(single)
     print(single.solve_eight(EightSquare.calculate_heuristic_one))
+    """
+
+    #Random test passed
+    #Random test heuristic_one
+    """
+    print("Random test")
+    randomtest: EightSquare = EightSquare()
+    randomtest.randomize()
+    print(randomtest.solve_eight(EightSquare.calculate_heuristic_one))
+    """
+
+    #Random test passed
+    #Random test heuristic_two
+    """
+    print("Random test")
+    randomtest: EightSquare = EightSquare()
+    randomtest.randomize()
+    print(randomtest.solve_eight(EightSquare.calculate_heuristic_two))
+    """
+
+    random_puzzles = []
+    for i in range(100):
+        puzzle: EightSquare = EightSquare()
+        puzzle.randomize()
+        random_puzzles.append(puzzle)
+
+    heruistic_one_steps = []
+    heruistic_two_steps = []
+    heruistic_three_steps = []
+    for puzzle in random_puzzles:
+        heruistic_one_steps.append(puzzle.solve_eight(EightSquare.calculate_heuristic_one))
+        heruistic_two_steps.append(puzzle.solve_eight(EightSquare.calculate_heuristic_two))
+        heruistic_three_steps.append(puzzle.solve_eight(EightSquare.calculate_heuristic_three))
+
+    print(sum(heruistic_one_steps)/len(heruistic_one_steps))
+    print(sum(heruistic_two_steps)/len(heruistic_two_steps))
+    print(sum(heruistic_three_steps)/len(heruistic_three_steps))
+
 
 main()
